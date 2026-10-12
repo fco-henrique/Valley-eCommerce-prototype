@@ -5,21 +5,19 @@ import com.piper.valley.models.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 @Component
-public class AddProductFormValidator implements Validator {
+public class AddProductFormValidator extends AbstractFormValidator<AddProductForm> {
 	@Autowired
 	private ProductRepository productRepository;
 
 	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(AddProductForm.class);
+	protected Class<AddProductForm> formType() {
+		return AddProductForm.class;
 	}
 
 	@Override
-	public void validate(Object target, Errors errors) {
-		AddProductForm form = (AddProductForm) target;
+	protected void validateForm(AddProductForm form, Errors errors) {
 		if(form.getPhysicalProduct())
 			validatePhysical(errors, form);
 		else

@@ -1,59 +1,52 @@
 package com.piper.valley.validators;
 
-import com.piper.valley.models.service.AuthService;
-import com.piper.valley.auth.CurrentUser;
 import com.piper.valley.forms.UndoHistoryForm;
+import com.piper.valley.models.domain.Store;
 import com.piper.valley.models.domain.StoreHistory;
 import com.piper.valley.models.enums.StoreHistoryStatus;
 import com.piper.valley.models.service.StoreHistoryService;
-import com.piper.valley.utilities.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 import java.util.Optional;
 
 @Component
-public class UndoHistoryValidator implements Validator {
+public class UndoHistoryValidator extends AbstractExistingStoreResourceValidator<UndoHistoryForm, StoreHistory> {
+    @Autowired
+    private StoreHistoryService storeHistoryService;
 
-	@Autowired
-	StoreHistoryService storeHistoryService;
+    @Override
+    protected Class<UndoHistoryForm> formType() {
+        return UndoHistoryForm.class;
+    }
 
-	@Autowired
-	AuthService authService;
+    @Override
+    protected Optional<StoreHistory> findResource(UndoHistoryForm form) {
+        return storeHistoryService.getById(form.getId());
+    }
 
-	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(UndoHistoryForm.class);
-	}
+    @Override
+    protected String fieldName() {
+        return "Id";
+    }
 
-	@Override
-	public void validate(Object target, Errors errors) {
-		UndoHistoryForm undoHistoryForm = (UndoHistoryForm) target;
+    @Override
+    protected String missingMessage() {
+        return "History doesn't exist!";
+    }
 
-		//Avoid Querying DB if there is an error already.
-		if(errors.hasErrors())
-			return;
+    @Override
+    protected boolean isValidState(StoreHistory history) {
+        return history.getStatus() == StoreHistoryStatus.UNDOABLE;
+    }
 
-		Optional<StoreHistory> storeHistoryOptional = storeHistoryService.getById(undoHistoryForm.getId());
+    @Override
+    protected String invalidStateMessage() {
+        return null;
+    }
 
-		if(!storeHistoryOptional.isPresent()) {
-			errors.rejectValue("Id", "NotValid", "History doesn't exist!");
-			return;
-		}
-
-		StoreHistory storeHistory = storeHistoryOptional.get();
-		if(storeHistory.getStatus() != StoreHistoryStatus.UNDOABLE){
-			errors.rejectValue("Id", "NotValid");
-			return;
-		}
-
-
-		CurrentUser currentUser = AuthUtil.getCurrentUser();
-		if(!authService.canAccessStore(storeHistory.getStore(), currentUser)){
-			errors.rejectValue("Id", "msg.NotAuthorized", "You're not Authorized to do that!");
-		}
-
-	}
+    @Override
+    protected Store storeOf(StoreHistory history) {
+        return history.getStore();
+    }
 }

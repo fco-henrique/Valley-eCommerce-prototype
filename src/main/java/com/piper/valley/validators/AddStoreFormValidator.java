@@ -11,21 +11,19 @@ import com.piper.valley.utilities.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 @Component
-public class AddStoreFormValidator implements Validator {
+public class AddStoreFormValidator extends AbstractFormValidator<AddStoreForm> {
 	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(AddStoreForm.class);
+	protected Class<AddStoreForm> formType() {
+		return AddStoreForm.class;
 	}
 
 	@Autowired
 	private StoreService storeService;
 
 	@Override
-	public void validate(Object target, Errors errors) {
-		AddStoreForm form = (AddStoreForm) target;
+	protected void validateForm(AddStoreForm form, Errors errors) {
 		if(form.getPhysical())
 			validatePhysical(errors, form);
 

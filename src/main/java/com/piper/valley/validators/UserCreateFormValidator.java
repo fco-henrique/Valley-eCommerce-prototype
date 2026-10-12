@@ -5,22 +5,20 @@ import com.piper.valley.models.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 @Component
-public class UserCreateFormValidator implements Validator {
+public class UserCreateFormValidator extends AbstractFormValidator<UserCreateForm> {
 	@Autowired
 	private UserRepository userRepository;
 
 
 	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(UserCreateForm.class);
+	protected Class<UserCreateForm> formType() {
+		return UserCreateForm.class;
 	}
 
 	@Override
-	public void validate(Object target, Errors errors) {
-		UserCreateForm form = (UserCreateForm) target;
+	protected void validateForm(UserCreateForm form, Errors errors) {
 		validatePasswords(errors, form);
 		validateUsername(errors, form);
 		validateEmail(errors, form);

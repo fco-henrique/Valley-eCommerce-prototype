@@ -11,12 +11,11 @@ import com.piper.valley.utilities.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 import java.util.Optional;
 
 @Component
-public class AddStoreProductFormValidator implements Validator {
+public class AddStoreProductFormValidator extends AbstractFormValidator<AddStoreProductForm> {
 	@Autowired
 	private ProductService productService;
 
@@ -27,17 +26,17 @@ public class AddStoreProductFormValidator implements Validator {
 	private AuthService authService;
 
 	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(AddStoreProductForm.class);
+	protected Class<AddStoreProductForm> formType() {
+		return AddStoreProductForm.class;
 	}
 
 	@Override
-	public void validate(Object target, Errors errors) {
-		AddStoreProductForm form = (AddStoreProductForm) target;
+	protected boolean skipWhenErrorsPresent() {
+		return true;
+	}
 
-		//Avoid Querying DB if there is an error already.
-		if(errors.hasErrors())
-			return;
+	@Override
+	protected void validateForm(AddStoreProductForm form, Errors errors) {
 
 		Optional<Product> productOptional = productService.getProductById(form.getProductId());
 		if(!productOptional.isPresent()) {

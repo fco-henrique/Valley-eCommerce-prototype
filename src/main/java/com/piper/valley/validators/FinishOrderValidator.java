@@ -1,60 +1,51 @@
 package com.piper.valley.validators;
 
-import com.piper.valley.models.service.AuthService;
-import com.piper.valley.auth.CurrentUser;
 import com.piper.valley.forms.FinishOrderForm;
 import com.piper.valley.models.domain.Order;
-import com.piper.valley.models.enums.OrderStatus;
+import com.piper.valley.models.domain.Store;
 import com.piper.valley.models.service.OrderService;
-import com.piper.valley.utilities.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 import java.util.Optional;
 
 @Component
-public class FinishOrderValidator implements Validator {
+public class FinishOrderValidator extends AbstractExistingStoreResourceValidator<FinishOrderForm, Order> {
+    @Autowired
+    private OrderService orderService;
 
-	@Autowired
-	OrderService orderService;
+    @Override
+    protected Class<FinishOrderForm> formType() {
+        return FinishOrderForm.class;
+    }
 
-	@Autowired
-	AuthService authService;
+    @Override
+    protected Optional<Order> findResource(FinishOrderForm form) {
+        return orderService.getOrderById(form.getOrderId());
+    }
 
-	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(FinishOrderForm.class);
-	}
+    @Override
+    protected String fieldName() {
+        return "orderId";
+    }
 
-	@Override
-	public void validate(Object target, Errors errors) {
-		FinishOrderForm finishOrderForm = (FinishOrderForm) target;
+    @Override
+    protected String missingMessage() {
+        return "Order doesn't exist!";
+    }
 
-		//Avoid Querying DB if there is an error already.
-		if(errors.hasErrors())
-			return;
+    @Override
+    protected boolean isValidState(Order order) {
+        return order.canBeDelivered();
+    }
 
-		Optional<Order> orderOptional = orderService.getOrderById(finishOrderForm.getOrderId());
+    @Override
+    protected String invalidStateMessage() {
+        return "Un-valid Order";
+    }
 
-		if(!orderOptional.isPresent()) {
-			errors.rejectValue("orderId", "NotValid", "Order doesn't exist!");
-			return;
-		}
-
-		Order order = orderOptional.get();
-		if(order.getOrderStatus() == OrderStatus.DELIVERED || order.getOrderStatus() == OrderStatus.UNPROCESSED){
-			errors.rejectValue("orderId", "NotValid", "Un-valid Order");
-			return;
-		}
-
-		CurrentUser currentUser = AuthUtil.getCurrentUser();
-		if(!authService.canAccessStore(order.getStoreProduct().getStore(), currentUser)){
-			errors.rejectValue("orderId", "msg.NotAuthorized", "You're not Authorized to do that!");
-		}
-
-	}
-
-
+    @Override
+    protected Store storeOf(Order order) {
+        return order.getStoreProduct().getStore();
+    }
 }

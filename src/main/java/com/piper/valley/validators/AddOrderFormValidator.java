@@ -3,20 +3,18 @@ package com.piper.valley.validators;
 import com.piper.valley.forms.AddOrderForm;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 @Component
-public class AddOrderFormValidator implements Validator {
+public class AddOrderFormValidator extends AbstractFormValidator<AddOrderForm> {
 
 
 	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz.equals(AddOrderForm.class);
+	protected Class<AddOrderForm> formType() {
+		return AddOrderForm.class;
 	}
 
 	@Override
-	public void validate(Object target, Errors errors) {
-		AddOrderForm form = (AddOrderForm) target;
+	protected void validateForm(AddOrderForm form, Errors errors) {
 		validateQuantity(errors,form);
 		validateAddress(errors,form);
 	}

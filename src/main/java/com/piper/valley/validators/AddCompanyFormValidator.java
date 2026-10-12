@@ -4,31 +4,29 @@ import com.piper.valley.forms.AddCompanyForm;
 import com.piper.valley.models.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 @Component
-public class AddCompanyFormValidator implements Validator{
-   @Autowired
+public class AddCompanyFormValidator extends AbstractUniqueNameValidator<AddCompanyForm> {
+    @Autowired
     private CompanyRepository companyRepository;
 
-   @Override
-    public boolean supports(Class<?> clazz)
-   {
-       return clazz.equals(AddCompanyForm.class);
-   }
-    public void validate(Object target,Errors errors)
-   {
-       AddCompanyForm form =(AddCompanyForm) target;
-       validateName(errors,form);
-   }
-   private void validateName(Errors errors,AddCompanyForm form)
-   {
-       if(errors.hasFieldErrors("name"))
-           return;
+    @Override
+    protected Class<AddCompanyForm> formType() {
+        return AddCompanyForm.class;
+    }
 
-       if(companyRepository.findOneByName(form.getName()).isPresent()) {
-                errors.rejectValue("name","msg.DuplicateCompanyName");
-       }
-   }
+    @Override
+    protected String nameOf(AddCompanyForm form) {
+        return form.getName();
+    }
+
+    @Override
+    protected boolean nameExists(String name) {
+        return companyRepository.findOneByName(name).isPresent();
+    }
+
+    @Override
+    protected String duplicateNameCode() {
+        return "msg.DuplicateCompanyName";
+    }
 }
