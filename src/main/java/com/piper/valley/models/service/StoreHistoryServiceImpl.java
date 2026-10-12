@@ -1,11 +1,11 @@
 package com.piper.valley.models.service;
 
 import com.piper.valley.auth.CurrentUser;
-import com.piper.valley.forms.AddStoreCollaboratorForm;
-import com.piper.valley.forms.AddStoreProductForm;
+import com.piper.valley.models.command.Command;
+import com.piper.valley.models.command.UndoCollaboratorHistoryCommand;
+import com.piper.valley.models.command.UndoProductHistoryCommand;
 import com.piper.valley.models.domain.*;
 import com.piper.valley.models.enums.StoreHistoryStatus;
-import com.piper.valley.models.enums.StoreHistoryType;
 import com.piper.valley.models.repository.StoreHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -79,52 +79,16 @@ public class StoreHistoryServiceImpl implements  StoreHistoryService{
 
 	@Override
 	public Boolean undoCollab(StoreCollabHistory storeCollabHistory, CurrentUser currentUser) {
-		if(!authService.canAccessStore(storeCollabHistory.getStore(), currentUser))
-			return false;
-
-		if(storeCollabHistory.getType() == StoreHistoryType.ADD)
-			storeService.removeCollaboratorToStore(
-				new AddStoreCollaboratorForm(storeCollabHistory.getStore().getId(),
-				storeCollabHistory.getCollab().getUsername()), currentUser.getId()
-			);
-
-		else if(storeCollabHistory.getType() == StoreHistoryType.DELETE)
-			storeService.addCollaboratorToStore(
-					new AddStoreCollaboratorForm(storeCollabHistory.getStore().getId(),
-					storeCollabHistory.getCollab().getUsername()), currentUser.getId()
-			);
-
-		return true;
+		Command<Boolean> command = new UndoCollaboratorHistoryCommand(
+				storeCollabHistory, currentUser, authService, storeService);
+		return command.execute();
 	}
 
 	@Override
-		public Boolean undoProduct(StoreProductHistory storeProductHistory, CurrentUser currentUser) {
-
-		if(!authService.canAccessStore(storeProductHistory.getStore(), currentUser))
-			return false;
-
-		if(storeProductHistory.getType() == StoreHistoryType.DELETE) {
-			//TODO make this better (via shadow-deleting to preserve orders, etc)
-			storeService.addProductToStore(
-					new AddStoreProductForm(
-							storeProductHistory.getStoreId(),
-							storeProductHistory.getProductId(),
-							storeProductHistory.getOldProductName(),
-							storeProductHistory.getOldProductDescription(),
-							storeProductHistory.getOldProductPrice()
-					), currentUser.getUser());
-			return true;
-		}
-
-		Optional<StoreProduct> storeProduct = storeProductService.getProductById(storeProductHistory.getStoreProductID());
-
-		if(!storeProduct.isPresent())
-			return false;
-
-		if(storeProductHistory.getType() == StoreHistoryType.ADD)
-			storeService.removeProductFromStore(storeProduct.get().getId(), currentUser.getUser());
-
-		return true;
+	public Boolean undoProduct(StoreProductHistory storeProductHistory, CurrentUser currentUser) {
+		Command<Boolean> command = new UndoProductHistoryCommand(
+				storeProductHistory, currentUser, authService, storeService, storeProductService);
+		return command.execute();
 	}
 
 	@Override
