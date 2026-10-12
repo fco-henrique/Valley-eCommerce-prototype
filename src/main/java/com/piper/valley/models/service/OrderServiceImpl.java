@@ -42,15 +42,13 @@ public class OrderServiceImpl implements OrderService {
     public Order changeStatus(Long id) {
         Optional<Order> order = getOrderById(id);
         Order order1=order.get();
-        order1.setOrderStatus(OrderStatus.PROCESSED);
-        order1.setProcessedDate(new Date());
+        order1.process();
         return orderRepository.save(order1);
     }
 
     public List<Order> changeStatus(Collection<Order> orders) {
         for(Order order1 : orders){
-            order1.setOrderStatus(OrderStatus.PROCESSED);
-            order1.setProcessedDate(new Date());
+            order1.process();
         }
         return orderRepository.save(orders);
     }
@@ -72,8 +70,7 @@ public class OrderServiceImpl implements OrderService {
         Optional<Order> order = Optional.ofNullable(orderRepository.findOne(orderId));
         if(order.isPresent()) {
             Order order1 = order.get();
-            order1.setOrderStatus(OrderStatus.DELIVERED);
-            order1.setDeliveredDate(new Date());
+            order1.deliver();
             return orderRepository.save(order1);
         }
         return null;

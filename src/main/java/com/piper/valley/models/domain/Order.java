@@ -54,7 +54,18 @@ public class Order {
 				this.user = user;
 				this.addedDate = new Date();
 				this.address=addOrderForm.getAddress();
-				this.processedDate = new Date();
+	}
+
+	public void process() {
+		OrderStates.forStatus(orderStatus).process(this);
+	}
+
+	public void deliver() {
+		OrderStates.forStatus(orderStatus).deliver(this);
+	}
+
+	public boolean canBeDelivered() {
+		return OrderStates.forStatus(orderStatus).canDeliver();
 	}
 
 	public StoreProduct getStoreProduct() {
@@ -126,7 +137,7 @@ public class Order {
 		return orderStatus;
 	}
 
-	public void setOrderStatus(OrderStatus orderStatus) {
+	void setOrderStatus(OrderStatus orderStatus) {
 		this.orderStatus = orderStatus;
 	}
 
